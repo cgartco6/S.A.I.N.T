@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Crypto Dashboard - Real-Time Prices & Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --text: #e6e6e6;
+            --profit: #2ecc71;
+            --loss: #e74c3c;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --header-bg: rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        header {
+            background-color: var(--header-bg);
+            padding: 1rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .app-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--profit), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        
+        .app-subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+        
+        .ticker-container {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.75rem 0;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ticker {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker-scroll 300s linear infinite;
+        }
+        
+        .ticker-item {
+            display: inline-block;
+            margin: 0 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .ticker-symbol {
+            font-weight: 700;
+            margin-right: 0.25rem;
+        }
+        
+        .ticker-price {
+            color: var(--text);
+        }
+        
+        .ticker-change {
+            margin-left: 0.5rem;
+        }
+        
+        .positive { color: var(--profit); }
+        .negative { color: var(--loss); }
+        
+        @keyframes ticker-scroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 1rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .panels-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--profit);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-title {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .neutral { color: var(--warning); }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background-color: rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--accent);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            bottom: 0;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .system-health {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .health-bar {
+            width: 80px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-green { background-color: var(--profit); color: #000; }
+        .badge-red { background-color: var(--loss); }
+        .badge-orange { background-color: var(--warning); color: #000; }
+        
+        .blink {
+            animation: blink-animation 1s steps(2, start) infinite;
+        }
+        
+        @keyframes blink-animation {
+            to { visibility: hidden; }
+        }
+        
+        .price-update {
+            animation: highlight 1s ease;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: rgba(46, 204, 113, 0.3); }
+            100% { background-color: transparent; }
+        }
+        
+        .crypto-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            margin: 1.5rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .panels-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .app-title {
+                font-size: 1.5rem;
+            }
+            
+            .panel {
+                padding: 1rem;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            
+            .ticker-item {
+                margin: 0 0.75rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .app-title {
+                font-size: 1.3rem;
+            }
+            
+            .ticker-item {
+                margin: 0 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="app-title">Live Crypto Intelligence</h1>
+            <p class="app-subtitle">Real-Time Prices, Predictions & Market Analysis</p>
+        </header>
+        
+        <div class="ticker-container">
+            <div class="ticker" id="crypto-ticker">
+                <!-- Ticker items will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Market Cap</div>
+                    <div class="stat-value neutral" id="total-marketcap">$2.36T</div>
+                    <div>Total Crypto</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">24h Volume</div>
+                    <div class="stat-value neutral" id="total-volume">$108.4B</div>
+                    <div>Global</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">BTC Dominance</div>
+                    <div class="stat-value neutral" id="btc-dominance">46.8%</div>
+                    <div>Current</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Fear & Greed</div>
+                    <div class="stat-value positive" id="fear-greed">72/100</div>
+                    <div>Greed</div>
+                </div>
+            </div>
+            
+            <div class="panels-container">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Top Gainers</h2>
+                        <span class="badge badge-green" id="gainers-count">10 coins</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="gainers-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Coin</th>
+                                    <th data-sort="price">Price</th>
+                                    <th data-sort="change24h">24h %</th>
+                                    <th data-sort="volume">Volume (24h)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gainers-body">
+                                <tr><td colspan="4" style="text-align: center;">Loading gainers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Top Losers</h2>
+                        <span class="badge badge-red" id="losers-count">10 coins</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="losers-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Coin</th>
+                                    <th data-sort="price">Price</th>
+                                    <th data-sort="change24h">24h %</th>
+                                    <th data-sort="volume">Volume (24h)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="losers-body">
+                                <tr><td colspan="4" style="text-align: center;">Loading losers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Live Crypto Prices</h2>
+                    <span class="badge badge-orange" id="crypto-count">25 coins</span>
+                </div>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="gainers">Gainers</button>
+                    <button class="filter-btn" data-filter="losers">Losers</button>
+                </div>
+                <div class="table-container">
+                    <table id="prices-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Coin</th>
+                                <th data-sort="price">Price</th>
+                                <th data-sort="change24h">24h %</th>
+                                <th data-sort="marketcap">Market Cap</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prices-body">
+                            <tr><td colspan="4" style="text-align: center;">Loading live prices...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="panels-container">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Market Sentiment</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sentiment-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Market Dominance</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dominance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Real-Time Updates</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Last Update</div>
+                        <div class="stat-value" id="last-update">Just now</div>
+                        <div>Timestamp</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Active Coins</div>
+                        <div class="stat-value positive" id="active-coins">12,345</div>
+                        <div>Tracked</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Updating In</div>
+                        <div class="stat-value neutral" id="update-countdown">60s</div>
+                        <div>Next Refresh</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Data Source</div>
+                        <div class="stat-value positive" id="data-source">CoinGecko</div>
+                        <div>Live API</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="system-health">
+                <span>System Health:</span>
+                <div class="health-bar">
+                    <div class="health-fill" id="health-bar" style="width: 100%; background-color: #2ecc71;"></div>
+                </div>
+                <span id="health-text">Optimal</span>
+            </div>
+            <div id="status-message">Loading real-time cryptocurrency data...</div>
+            <div id="update-timer" class="blink">Live Updates Enabled</div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let coinData = [];
+        let sortField = 'market_cap_rank';
+        let sortDirection = 'asc';
+        let currentFilter = 'all';
+        let updateInterval;
+        let updateTimer = 60;
+        let charts = {
+            sentiment: null,
+            dominance: null
+        };
+        
+        // DOM elements
+        const tickerElement = document.getElementById('crypto-ticker');
+        const gainersBody = document.getElementById('gainers-body');
+        const losersBody = document.getElementById('losers-body');
+        const pricesBody = document.getElementById('prices-body');
+        const healthBar = document.getElementById('health-bar');
+        const healthText = document.getElementById('health-text');
+        const statusMessage = document.getElementById('status-message');
+        const updateTimerElement = document.getElementById('update-timer');
+        const lastUpdateElement = document.getElementById('last-update');
+        const updateCountdownElement = document.getElementById('update-countdown');
+        const totalMarketcapElement = document.getElementById('total-marketcap');
+        const totalVolumeElement = document.getElementById('total-volume');
+        const btcDominanceElement = document.getElementById('btc-dominance');
+        const fearGreedElement = document.getElementById('fear-greed');
+        const activeCoinsElement = document.getElementById('active-coins');
+        const dataSourceElement = document.getElementById('data-source');
+        const cryptoCountElement = document.getElementById('crypto-count');
+        const gainersCountElement = document.getElementById('gainers-count');
+        const losersCountElement = document.getElementById('losers-count');
+        
+        // Initialize the application
+        async function initializeApp() {
+            statusMessage.textContent = "Loading real-time cryptocurrency data...";
+            
+            try {
+                // Initialize charts
+                initializeCharts();
+                
+                // Fetch initial data
+                await fetchMarketData();
+                
+                // Set up periodic updates
+                startUpdateCycle();
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                statusMessage.textContent = "System operational. Monitoring markets...";
+                healthBar.style.backgroundColor = "#2ecc71";
+                healthText.textContent = "Optimal";
+                
+            } catch (error) {
+                console.error("Initialization error:", error);
+                statusMessage.textContent = "Initialization failed: " + error.message;
+                healthBar.style.backgroundColor = "#e74c3c";
+                healthText.textContent = "Error";
+                
+                // Retry after 10 seconds
+                setTimeout(initializeApp, 10000);
+            }
+        }
+        
+        // Initialize charts
+        function initializeCharts() {
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentiment-chart').getContext('2d');
+            charts.sentiment = new Chart(sentimentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bullish', 'Neutral', 'Bearish'],
+                    datasets: [{
+                        data: [60, 25, 15],
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e6e6e6',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Dominance Chart
+            const dominanceCtx = document.getElementById('dominance-chart').getContext('2d');
+            charts.dominance = new Chart(dominanceCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Bitcoin', 'Ethereum', 'Other Top 10', 'Rest'],
+                    datasets: [{
+                        data: [46.8, 18.2, 22.5, 12.5],
+                        backgroundColor: ['#2ecc71', '#3498db', '#9b59b6', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e6e6e6',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Fetch market data from CoinGecko API
+        async function fetchMarketData() {
+            try {
+                // Use CoinGecko API to get market data
+                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch market data');
+                }
+                
+                coinData = await response.json();
+                
+                // Update the UI
+                updateDashboard();
+                
+                // Update last update time
+                const now = new Date();
+                lastUpdateElement.textContent = now.toLocaleTimeString();
+                
+                return true;
+                
+            } catch (error) {
+                console.error("Data fetch error:", error);
+                statusMessage.textContent = "Data fetch failed: " + error.message;
+                
+                // Retry after 5 seconds
+                setTimeout(fetchMarketData, 5000);
+                return false;
+            }
+        }
+        
+        // Update the dashboard with processed data
+        function updateDashboard() {
+            // Update market stats
+            updateMarketStats();
+            
+            // Update ticker
+            updateTicker();
+            
+            // Update gainers and losers tables
+            updateGainersLosers();
+            
+            // Update prices table
+            updatePricesTable();
+            
+            // Update charts
+            updateCharts();
+        }
+        
+        // Update market statistics
+        function updateMarketStats() {
+            // Calculate total market cap and volume
+            const totalMarketcap = coinData.reduce((sum, coin) => sum + coin.market_cap, 0);
+            const totalVolume = coinData.reduce((sum, coin) => sum + coin.total_volume, 0);
+            
+            // Format numbers
+            totalMarketcapElement.textContent = formatCurrency(totalMarketcap);
+            totalVolumeElement.textContent = formatCurrency(totalVolume);
+            
+            // Get BTC dominance
+            const btc = coinData.find(coin => coin.symbol === 'btc');
+            if (btc) {
+                btcDominanceElement.textContent = `${(btc.market_cap / totalMarketcap * 100).toFixed(1)}%`;
+            }
+            
+            // Update active coins count
+            activeCoinsElement.textContent = coinData.length.toLocaleString();
+            cryptoCountElement.textContent = `${coinData.length} coins`;
+        }
+        
+        // Update the ticker with crypto data
+        function updateTicker() {
+            tickerElement.innerHTML = '';
+            
+            coinData.forEach(coin => {
+                const tickerItem = document.createElement('div');
+                tickerItem.className = 'ticker-item';
+                
+                tickerItem.innerHTML = `
+                    <span class="ticker-symbol">${coin.symbol.toUpperCase()}</span>
+                    <span class="ticker-price">${formatCurrency(coin.current_price)}</span>
+                    <span class="ticker-change ${coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
+                        ${formatPercentage(coin.price_change_percentage_24h / 100)}
+                    </span>
+                `;
+                
+                tickerElement.appendChild(tickerItem);
+            });
+        }
+        
+        // Update gainers and losers tables
+        function updateGainersLosers() {
+            // Sort by price change percentage
+            const sortedData = [...coinData].sort((a, b) => 
+                b.price_change_percentage_24h - a.price_change_percentage_24h
+            );
+            
+            // Get top 10 gainers and losers
+            const topGainers = sortedData.slice(0, 10);
+            const topLosers = sortedData.slice(-10).reverse();
+            
+            // Update counters
+            gainersCountElement.textContent = `${topGainers.length} coins`;
+            losersCountElement.textContent = `${topLosers.length} coins`;
+            
+            // Update gainers table
+            gainersBody.innerHTML = '';
+            topGainers.forEach(coin => {
+                const row = document.createElement('tr');
+                
+                // Format values
+                const formattedPrice = formatCurrency(coin.current_price);
+                const formattedChange = formatPercentage(coin.price_change_percentage_24h / 100);
+                const formattedVolume = formatLargeNumber(coin.total_volume);
+                
+                row.innerHTML = `
+                    <td>
+                        <img src="${coin.image}" alt="${coin.name}" class="crypto-icon">
+                        ${coin.name}
+                    </td>
+                    <td>${formattedPrice}</td>
+                    <td class="positive">${formattedChange}</td>
+                    <td>$${formattedVolume}</td>
+                `;
+                
+                gainersBody.appendChild(row);
+            });
+            
+            // Update losers table
+            losersBody.innerHTML = '';
+            topLosers.forEach(coin => {
+                const row = document.createElement('tr');
+                
+                // Format values
+                const formattedPrice = formatCurrency(coin.current_price);
+                const formattedChange = formatPercentage(coin.price_change_percentage_24h / 100);
+                const formattedVolume = formatLargeNumber(coin.total_volume);
+                
+                row.innerHTML = `
+                    <td>
+                        <img src="${coin.image}" alt="${coin.name}" class="crypto-icon">
+                        ${coin.name}
+                    </td>
+                    <td>${formattedPrice}</td>
+                    <td class="negative">${formattedChange}</td>
+                    <td>$${formattedVolume}</td>
+                `;
+                
+                losersBody.appendChild(row);
+            });
+        }
+        
+        // Update prices table
+        function updatePricesTable() {
+            pricesBody.innerHTML = '';
+            
+            // Apply current filter
+            let filteredData = [...coinData];
+            if (currentFilter === 'gainers') {
+                filteredData = filteredData.filter(coin => coin.price_change_percentage_24h > 0);
+            } else if (currentFilter === 'losers') {
+                filteredData = filteredData.filter(coin => coin.price_change_percentage_24h < 0);
+            }
+            
+            // Apply current sort
+            filteredData = sortData(filteredData, sortField, sortDirection);
+            
+            filteredData.forEach(coin => {
+                const row = document.createElement('tr');
+                
+                // Format values
+                const formattedPrice = formatCurrency(coin.current_price);
+                const formattedChange = formatPercentage(coin.price_change_percentage_24h / 100);
+                const formattedMarketcap = formatLargeNumber(coin.market_cap);
+                
+                row.innerHTML = `
+                    <td>
+                        <img src="${coin.image}" alt="${coin.name}" class="crypto-icon">
+                        ${coin.name} (${coin.symbol.toUpperCase()})
+                    </td>
+                    <td>${formattedPrice}</td>
+                    <td class="${coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
+                        ${formattedChange}
+                    </td>
+                    <td>$${formattedMarketcap}</td>
+                `;
+                
+                pricesBody.appendChild(row);
+            });
+        }
+        
+        // Update charts with current data
+        function updateCharts() {
+            // Update sentiment chart with random data (for demo)
+            const bullish = 50 + Math.floor(Math.random() * 20);
+            const bearish = 20 + Math.floor(Math.random() * 15);
+            const neutral = 100 - bullish - bearish;
+            
+            charts.sentiment.data.datasets[0].data = [bullish, neutral, bearish];
+            charts.sentiment.update();
+            
+            // Update dominance chart with real data
+            const btc = coinData.find(coin => coin.symbol === 'btc');
+            const eth = coinData.find(coin => coin.symbol === 'eth');
+            const top10 = coinData.slice(0, 10);
+            const rest = coinData.slice(10);
+            
+            if (btc && eth) {
+                const totalMarketcap = coinData.reduce((sum, coin) => sum + coin.market_cap, 0);
+                const btcDominance = (btc.market_cap / totalMarketcap) * 100;
+                const ethDominance = (eth.market_cap / totalMarketcap) * 100;
+                const top10WithoutBtcEth = top10.reduce((sum, coin) => {
+                    if (coin.symbol !== 'btc' && coin.symbol !== 'eth') {
+                        return sum + coin.market_cap;
+                    }
+                    return sum;
+                }, 0);
+                const top10Dominance = (top10WithoutBtcEth / totalMarketcap) * 100;
+                const restDominance = 100 - btcDominance - ethDominance - top10Dominance;
+                
+                charts.dominance.data.datasets[0].data = [
+                    btcDominance, 
+                    ethDominance, 
+                    top10Dominance, 
+                    restDominance
+                ];
+                charts.dominance.update();
+            }
+        }
+        
+        // Sort data based on field and direction
+        function sortData(data, field, direction) {
+            return [...data].sort((a, b) => {
+                let valueA = a[field];
+                let valueB = b[field];
+                
+                if (valueA === undefined) valueA = direction === 'asc' ? Infinity : -Infinity;
+                if (valueB === undefined) valueB = direction === 'asc' ? Infinity : -Infinity;
+                
+                if (typeof valueA === 'string') {
+                    return direction === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                }
+                
+                if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+                if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Table sorting
+            document.querySelectorAll('th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const field = header.getAttribute('data-sort');
+                    
+                    if (sortField === field) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortField = field;
+                        sortDirection = 'desc';
+                    }
+                    
+                    updatePricesTable();
+                });
+            });
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    button.classList.add('active');
+                    currentFilter = button.getAttribute('data-filter');
+                    
+                    updatePricesTable();
+                });
+            });
+        }
+        
+        // Start the periodic update cycle
+        function startUpdateCycle() {
+            updateTimer = 60;
+            updateCountdownElement.textContent = `${updateTimer}s`;
+            
+            updateInterval = setInterval(() => {
+                updateTimer--;
+                updateCountdownElement.textContent = `${updateTimer}s`;
+                
+                if (updateTimer <= 0) {
+                    updateTimer = 60;
+                    fetchMarketData();
+                }
+            }, 1000);
+        }
+        
+        // Utility functions
+        function formatCurrency(value) {
+            if (value < 1) {
+                return '$' + value.toFixed(4);
+            }
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+        
+        function formatPercentage(value) {
+            const formatted = new Intl.NumberFormat('en-US', {
+                style: 'percent',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+            
+            return value >= 0 ? '+' + formatted : formatted;
+        }
+        
+        function formatLargeNumber(value) {
+            if (value >= 1e9) {
+                return (value / 1e9).toFixed(2) + 'B';
+            } else if (value >= 1e6) {
+                return (value / 1e6).toFixed(2) + 'M';
+            } else if (value >= 1e3) {
+                return (value / 1e3).toFixed(2) + 'K';
+            }
+            return value.toFixed(2);
+        }
+        
+        // Initialize the application when the page loads
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>
