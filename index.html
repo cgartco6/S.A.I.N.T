@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.A.I.N.T. - Crypto Intelligence Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tensorflow.js@3.18.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="app-title">S.A.I.N.T. Crypto Intelligence</h1>
+            <p class="app-subtitle">Synthetic Autonomous Intelligence for Navigating Trends</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Predicted Breakouts</div>
+                    <div class="stat-value positive" id="breakout-count">0</div>
+                    <div>24h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Top Gainers</div>
+                    <div class="stat-value positive" id="gainers-count">0</div>
+                    <div>24h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Money Inflow</div>
+                    <div class="stat-value positive" id="inflow-count">0</div>
+                    <div>24h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">AI Confidence</div>
+                    <div class="stat-value positive" id="ai-confidence">85%</div>
+                    <div>Current</div>
+                </div>
+            </div>
+            
+            <div class="panels-container">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Top Gainers & Losers</h2>
+                        <span class="badge badge-green" id="update-status">LIVE</span>
+                    </div>
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="gainers">Top Gainers</button>
+                        <button class="filter-btn" data-filter="losers">Top Losers</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="performance-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Coin</th>
+                                    <th data-sort="price">Price</th>
+                                    <th data-sort="change24h">24h %</th>
+                                    <th data-sort="volume">Volume (24h)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="performance-body">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Breakout Predictions</h2>
+                        <span class="badge badge-orange" id="prediction-count">0 coins</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="predictions-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Coin</th>
+                                    <th data-sort="price">Price</th>
+                                    <th data-sort="breakout">Breakout Score</th>
+                                    <th data-sort="inflow">Money Flow</th>
+                                    <th>Prediction</th>
+                                </tr>
+                            </thead>
+                            <tbody id="predictions-body">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panels-container">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Money Flow Analysis</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="money-flow-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Market Dominance</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dominance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">System Health & Configuration</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Model Version</div>
+                        <div class="stat-value neutral" id="model-version">v2.1</div>
+                        <div>AI Engine</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Data Sources</div>
+                        <div class="stat-value positive" id="data-sources">7/7</div>
+                        <div>Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Last Retrain</div>
+                        <div class="stat-value" id="last-retrain">12h ago</div>
+                        <div>Models</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Self-Healing</div>
+                        <div class="stat-value positive" id="self-healing">Active</div>
+                        <div>Protocol</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button id="retrain-btn" class="filter-btn">Retrain Models</button>
+                    <button id="optimize-btn" class="filter-btn">Optimize Features</button>
+                    <button id="diagnostic-btn" class="filter-btn">Run Diagnostic</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="system-health">
+                <span>System Health:</span>
+                <div class="health-bar">
+                    <div class="health-fill" id="health-bar" style="width: 100%; background-color: #4cc9f0;"></div>
+                </div>
+                <span id="health-text">Optimal</span>
+            </div>
+            <div id="status-message">Initializing synthetic intelligence systems...</div>
+            <div id="update-timer" class="blink">Next update in: 60s</div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="ml-models.js"></script>
+    <script src="data-service.js"></script>
+    <script src="self-healing.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
