@@ -3,7 +3,7 @@ const CONFIG = {
     // API endpoints
     APIs: {
         coinMarketCap: {
-            url: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
+            url: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
             key: '1166d943-7350-4996-88ae-0f842df38fde'
         },
         twitter: {
