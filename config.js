@@ -4,7 +4,7 @@ const CONFIG = {
     APIs: {
         coinMarketCap: {
             url: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
-            key: 'your_coinmarketcap_api_key_here'
+            key: '1166d943-7350-4996-88ae-0f842df38fde'
         },
         twitter: {
             url: 'https://api.twitter.com/2',
@@ -12,7 +12,7 @@ const CONFIG = {
         },
         news: {
             url: 'https://newsapi.org/v2',
-            key: 'your_newsapi_key_here'
+            key: 'f5f7faf106e34673ac7e30827f5f8534'
         }
     },
     
